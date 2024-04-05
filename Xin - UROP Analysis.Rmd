@@ -72,7 +72,9 @@ case3 <- clean_data$caseStudy3
 ```
 ###Total case studt score
 ```{r}
-TotalCaseStudyScore <- clean_data$caseStudy1 + clean_data$caseStudy2 + clean_data$caseStudy3
+clean_data$TotalCaseStudyScore <- clean_data$caseStudy1 + clean_data$caseStudy2 + clean_data$caseStudy3
+library(tidyverse)
+#View(cbind.data.frame(clean_data$caseStudy1,clean_data$caseStudy2,clean_data$caseStudy3,clean_data$TotalCaseStudyScore))
 ```
 ##R confidence
 ```{r}
@@ -88,10 +90,10 @@ statc3 <- clean_data$metacognition3ConfidenceStatistics
 ```
 ##Mentacognitive reflection
 ```{r}
-mr1 <- (clean_data$metacognition1ReflectQ4 + clean_data$metacognition1ReflectQ5) / 2
-mr2 <- (clean_data$metacognition2ReflectQ4 + clean_data$metacognition1ReflectQ5) / 2 
-mr3 <- (clean_data$metacognition3ReflectQ4 + clean_data$metacognition1ReflectQ5) / 2 
-pre_mr <- (clean_data$problemsolvingReflectionHelpful + clean_data$problemsolvingReflectionunHelpful + clean_data$problemSolvingReflectionStepbyStep)/3
+clean_data$mr1 <- (clean_data$metacognition1ReflectQ4 + clean_data$metacognition1ReflectQ5) 
+mr2 <- (clean_data$metacognition2ReflectQ4 + clean_data$metacognition1ReflectQ5) 
+mr3 <- (clean_data$metacognition3ReflectQ4 + clean_data$metacognition1ReflectQ5) 
+pre_mr <-clea (clean_data$problemsolvingReflectionHelpful + clean_data$problemsolvingReflectionunHelpful + clean_data$problemSolvingReflectionStepbyStep)
 ```
 ###Total score of Metacognitive reflection
 ```{r}
@@ -167,6 +169,7 @@ plot(model1)
 ```
 This way?
 ```{r}
+#overall
 model1 <- lm(grade ~ TotalMRScore, data = clean_data)
 summary(model1)
 
@@ -180,6 +183,24 @@ ggplot(clean_data, aes(x=TotalMRScore, y=grade)) +
        x="Metacognitive Reflection Score", 
        y="Final Grade")
 ```
+
+```{r}
+#follow up: acoress three case study
+# Prepare data for box plot
+mr_data <- data.frame(
+  CaseStudy1 = clean_data$mr1,
+  CaseStudy2 = clean_data$mr2,
+  CaseStudy3 = clean_data$mr3
+)
+
+melted_mr_data <- melt(mr_data, variable.name = "CaseStudy", value.name = "MRScore")
+
+ggplot(melted_mr_data, aes(x = CaseStudy, y = MRScore)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "MR Scores Across Three Case Studies", x = "Case Study", y = "MR Score")
+```
+
 ```{r}
 boxplot(grade~TotalMRScore,
 data=clean_data,
@@ -194,22 +215,6 @@ ggplot(data = clean_data) +
   geom_point(mapping = aes(x = TotalMRScore, y = grade))
 ggplot(data = clean_data) + 
   geom_smooth(mapping = aes(x = TotalMRScore, y = grade))
-```
-
-```{r}
-#box plot for metacognitive reflection score change across three case studies
-mr_data <- data.frame(
-  CaseStudy1 = clean_data$mr1,
-  CaseStudy2 = clean_data$mr2,
-  CaseStudy3 = clean_data$mr3
-)
-
-melted_mr_data <- melt(mr_data, variable.name = "CaseStudy", value.name = "MRScore")
-
-ggplot(melted_mr_data, aes(x = CaseStudy, y = MRScore)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "MR Scores Across Three Case Studies", x = "Case Study", y = "MR Score")
 ```
 
 ###Analysis 2: Using Average Reflection Score *
@@ -239,6 +244,7 @@ ggplot(clean_data, aes(x=premr, y=case1)) +
        x="Pre-Course Reflection Level", 
        y="First Exam Score")
 ```
+
 ##Research Question #3:
 Does students’ confidence levels in statics and R programming predict their performance in the performance (exam) in the course?
 
@@ -249,7 +255,6 @@ summary(model4)
 par(mfrow=c(2,2))
 plot(model4)
 ```
-
 ```{r}
 model6 <- lm(case2 ~ confidence2, data = clean_data)
 summary(model6)
@@ -257,7 +262,6 @@ summary(model6)
 par(mfrow=c(2,2))
 plot(model6)
 ```
-
 ```{r}
 model7 <- lm(case3 ~ confidence3, data = clean_data)
 summary(model7)
@@ -266,37 +270,6 @@ par(mfrow=c(2,2))
 plot(model7)
 ```
 
-```{r}
-combined_model <- lm(cbind(case1, case2, case3) ~ confidence1 + confidence2 + confidence3, data=clean_data)
-summary(combined_model)
-```
-
-#Anova analysis? 
-#overall confidence change in three case study
-```{r}
-data_long <- data.frame(
-  Participant = rep(clean_data$participant, times = 3),
-  TimePoint = rep(1:3, each = nrow(clean_data)),
-  Confidence = c(
-    (clean_data$metacognition1ConfidenceR + clean_data$metacognition1ConfidenceStatistics) / 2,
-    (clean_data$metacognition2ConfidenceR + clean_data$metacognition2ConfidenceStatistics) / 2,
-    (clean_data$metacognition3ConfidenceR + clean_data$metacognition3ConfidenceStatistics) / 2
-  )
-)
-
-data_long$TimePoint <- as.factor(data_long$TimePoint)
-anova_results <- ezANOVA(
-  data = data_long,
-  dv = .(Confidence),
-  wid = .(Participant),
-  within = .(TimePoint),
-  detailed = TRUE,
-  type = 3
-)
-anova_results
-```
-
-##confidence level change acoress three case study
 ```{r}
 confidence_data <- data.frame(
   CaseStudy1 = clean_data$metacognition1ConfidenceR,
@@ -310,5 +283,36 @@ ggplot(melted_confidence_data, aes(x = CaseStudy, y = Confidence)) +
   geom_boxplot() +
   theme_minimal() +
   labs(title = "Confidence Level Across Three Case Studies", x = "Case Study", y = "Confidence Level")
+```
+
+#Anova analysis?
+##the confidence change acoress three case study
+```{r}
+data_long <- data.frame(
+  ParticipantID = rep(clean_data$participant, times = 3),
+  TimePoint = rep(1:3, each = nrow(clean_data)),
+  Confidence = c(
+    (clean_data$metacognition1ConfidenceR + clean_data$metacognition1ConfidenceStatistics) / 2,
+    (clean_data$metacognition2ConfidenceR + clean_data$metacognition2ConfidenceStatistics) / 2,
+    (clean_data$metacognition3ConfidenceR + clean_data$metacognition3ConfidenceStatistics) / 2
+  )
+)
+```
+
+```{r}
+data_long$TimePoint <- as.factor(data_long$TimePoint)
+
+
+anova_results <- ezANOVA(
+  data = data_long,
+  dv = .(Confidence),
+  wid = .(ParticipantID),
+  within = .(TimePoint),
+  detailed = TRUE,
+  type = 3
+)
+
+anova_results
+
 ```
 
