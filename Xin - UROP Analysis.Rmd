@@ -1,0 +1,352 @@
+---
+title: "Xin - UROP Analysis"
+author: "Xin Lin"
+date: "2024-04-01"
+output: html_document
+---
+
+#Install packages
+```{r}
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(table1)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
+library(mediation)
+library(lmtest)
+library(lme4)
+```
+
+#Loading data
+```{r}
+data <- read.csv("C:/Users/xil90/OneDrive/Desktop/UROP Spring/Data/Xin UROP Coding.csv")
+```
+
+```{r}
+clean_data <- na.omit(data[c("participant",
+                             "finalClassGrade",
+                             "caseStudy1",
+                             "caseStudy2",
+                             "caseStudy3",
+                             "metacognition1ReflectQ4",
+                             "metacognition1ReflectQ5", 
+                             "metacognition2ReflectQ4",
+                             "metacognition2ReflectQ5",
+                             "metacognition3ReflectQ4",
+                             "metacognition3ReflectQ5",
+                             "metacognition1ConfidenceR",
+                             "metacognition2ConfidenceR",
+                             "metacognition3ConfidenceR",
+                             "metacognition1ConfidenceStatistics",
+                             "metacognition2ConfidenceStatistics",
+                             "metacognition3ConfidenceStatistics",
+                             "problemsolvingReflectionHelpful",
+                             "problemsolvingReflectionunHelpful",
+                             "problemSolvingReflectionStepbyStep"
+                             )])
+#clean the percentage in confidence
+clean_data$metacognition1ConfidenceR <- as.numeric(gsub("%", "", clean_data$metacognition1ConfidenceR))
+clean_data$metacognition1ConfidenceStatistics <- as.numeric(gsub("%", "", clean_data$metacognition1ConfidenceStatistics))
+
+clean_data$metacognition2ConfidenceR <- as.numeric(gsub("%", "", clean_data$metacognition2ConfidenceR))
+clean_data$metacognition2ConfidenceStatistics <- as.numeric(gsub("%", "", clean_data$metacognition2ConfidenceStatistics))
+
+clean_data$metacognition3ConfidenceR <- as.numeric(gsub("%", "", clean_data$metacognition3ConfidenceR))
+clean_data$metacognition3ConfidenceStatistics <- as.numeric(gsub("%", "", clean_data$metacognition3ConfidenceStatistics))
+
+```
+
+#Variable
+##Final Class Grade
+```{r}
+grade <- clean_data$finalClassGrade
+```
+##Case Study Grade
+```{r}
+case1 <- clean_data$caseStudy1
+case2 <- clean_data$caseStudy2
+case3 <- clean_data$caseStudy3
+```
+###Total case studt score
+```{r}
+TotalCaseStudyScore <- clean_data$caseStudy1 + clean_data$caseStudy2 + clean_data$caseStudy3
+```
+##R confidence
+```{r}
+rc1 <- clean_data$metacognition1ConfidenceR
+rc2 <- clean_data$metacognition2ConfidenceR
+rc3 <- clean_data$metacognition3ConfidenceR
+```
+##Statistics confidence
+```{r}
+statc1 <- clean_data$metacognition1ConfidenceStatistics
+statc2 <- clean_data$metacognition2ConfidenceStatistics
+statc3 <- clean_data$metacognition3ConfidenceStatistics
+```
+##Mentacognitive reflection
+```{r}
+mr1 <- (clean_data$metacognition1ReflectQ4 + clean_data$metacognition1ReflectQ5) / 2
+mr2 <- (clean_data$metacognition2ReflectQ4 + clean_data$metacognition1ReflectQ5) / 2 
+mr3 <- (clean_data$metacognition3ReflectQ4 + clean_data$metacognition1ReflectQ5) / 2 
+pre_mr <- (clean_data$problemsolvingReflectionHelpful + clean_data$problemsolvingReflectionunHelpful + clean_data$problemSolvingReflectionStepbyStep)/3
+```
+###Total score of Metacognitive reflection
+```{r}
+TotalMRScore <- mr1 + mr2 + mr3
+```
+###Average Mentacognitive reflection
+```{r}
+AverageMR <- (mr1 + mr2 + mr3) / 3
+```
+###total confidence in R and Stat of each case
+```{r}
+confidence1 <- (clean_data$metacognition1ConfidenceR + clean_data$metacognition1ConfidenceStatistics) / 200
+confidence2 <- (clean_data$metacognition2ConfidenceR + clean_data$metacognition2ConfidenceStatistics) / 200
+confidence3 <- (clean_data$metacognition3ConfidenceR + clean_data$metacognition3ConfidenceStatistics) / 200
+```
+###total confidence
+```{r}
+TotalConfidence <- confidence1 + confidence2 + confidence3
+```
+
+#Histogram
+```{r}
+#Final class's scores
+hist(grade, main = "Final Grade")
+
+#Three case study's scores
+hist(case1, main = "Final Score for Case Study 1")
+hist(case2, main = "Final Score for Case Study 2")
+hist(case3, main = "Final Score for Case Study 3")
+
+#R confidence 
+hist(rc1, main = "R confidence in case study 1")
+hist(rc2, main = "R confidence in case study 2")
+hist(rc3, main = "R confidence in case study 3")
+
+#Statics confidence
+hist(statc1, main = "Statistics confidence in case study 1")
+hist(statc2, main = "Statistics confidence in case study 2")
+hist(statc3, main = "Statistics confidence in case study 3")
+
+#Metacognition reflects scores for each case study
+hist(mr1, main = "Total Metacognition Reflect in case study 1")
+hist(mr2, main = "Total Metacognition Reflect in case study 2")
+hist(mr3, main = "Total Metacognition Reflect in case study 3")
+hist(pre_mr, main = "Metacognition Reflect in problem solving reflection")
+
+#total confidence
+hist(TotalConfidence, main = "Total R and statistics confidence in three case study")
+
+#total quality of metacogntion reflection score
+hist(TotalMRScore, main = "Total R and statistics confidence in three case study")
+
+
+```
+
+
+#Analysis
+#Descriptive Statistics
+```{r}
+summary(clean_data)
+```
+
+##Research Question #1:
+Does student engagement with metacognitive reflection assignment association with student academic outcome?
+###Analysis 1: Individual Reflection MR Scores
+```{r}
+model1 <- lm(grade ~ mr1 + mr2 + mr3, data = clean_data) 
+summary(model1)
+
+par(mfrow=c(2,2))
+plot(model1)
+
+```
+This way?
+```{r}
+model1 <- lm(grade ~ TotalMRScore, data = clean_data)
+summary(model1)
+
+par(mfrow=c(2,2))
+plot(model1)
+
+ggplot(clean_data, aes(x=TotalMRScore, y=grade)) +
+  geom_point() +
+  geom_smooth(method="lm", color="blue") +
+  labs(title="Relationship Between Metacognitive Reflection and Final Grade",
+       x="Metacognitive Reflection Score", 
+       y="Final Grade")
+```
+```{r}
+boxplot(grade~TotalMRScore,
+data=clean_data,
+main="Different boxplots for each case study",
+xlab="Month Number",
+ylab="Degree Fahrenheit",
+col="orange",
+border="brown"
+)
+
+ggplot(data = clean_data) + 
+  geom_point(mapping = aes(x = TotalMRScore, y = grade))
+ggplot(data = clean_data) + 
+  geom_smooth(mapping = aes(x = TotalMRScore, y = grade))
+```
+
+###Analysis 2: Using Average Reflection Score *
+```{r}
+model2 <- lm(grade ~ avgmr, data = clean_data)
+summary(model2)
+
+par(mfrow=c(2,2))
+plot(model2)
+```
+
+##Research Question #2:
+How does student’s reflections on pre-course metagecontion reflection assignment association with their performance in first exam?
+
+###Analysis3
+```{r}
+model3 <- lm(case1 ~ premr, data = clean_data)
+summary(model3)
+
+par(mfrow=c(2,2))
+plot(model3)
+
+ggplot(clean_data, aes(x=premr, y=case1)) +
+  geom_point() +
+  geom_smooth(method="lm", color="red") +
+  labs(title="First Exam Scores by Pre-Course Metacognition Reflection Level",
+       x="Pre-Course Reflection Level", 
+       y="First Exam Score")
+```
+##Research Question #3:
+Does students’ confidence levels in statics and R programming predict their performance in the performance (exam) in the course?
+
+```{r}
+model4 <- lm(case1 ~ confidence1, data = clean_data)
+summary(model4)
+
+par(mfrow=c(2,2))
+plot(model4)
+```
+```{r}
+model6 <- lm(case2 ~ confidence2, data = clean_data)
+summary(model6)
+
+par(mfrow=c(2,2))
+plot(model6)
+```
+
+```{r}
+combined_model <- lm(cbind(case1, case2, case3) ~ confidence1 + confidence2 + confidence3, data=clean_data)
+summary(combined_model)
+```
+
+```{r}
+model7 <- lm(case3 ~ confidence3, data = clean_data)
+summary(model7)
+
+par(mfrow=c(2,2))
+plot(model7)
+```
+```{r}
+# Prepare data for box plot
+confidence_data <- data.frame(
+  CaseStudy1 = clean_data$metacognition1ConfidenceR,
+  CaseStudy2 = clean_data$metacognition2ConfidenceR,
+  CaseStudy3 = clean_data$metacognition3ConfidenceR
+)
+
+# Melt the data for easier plotting with ggplot2
+library(reshape2)
+melted_confidence_data <- melt(confidence_data, variable.name = "CaseStudy", value.name = "Confidence")
+
+# Plotting
+library(ggplot2)
+ggplot(melted_confidence_data, aes(x = CaseStudy, y = Confidence)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Confidence Level Across Three Case Studies", x = "Case Study", y = "Confidence Level")
+
+```
+
+```{r}
+# Prepare data for box plot
+mr_data <- data.frame(
+  CaseStudy1 = clean_data$MR1,
+  CaseStudy2 = clean_data$MR2,
+  CaseStudy3 = clean_data$MR3
+)
+
+# Melt the data for easier plotting
+mr_melted <- melt(mr_data, variable.name = "CaseStudy", value.name = "MR_Score")
+
+# Plotting
+ggplot(mr_melted, aes(x = CaseStudy, y = MR_Score)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Metacognitive Reflection Score Across Three Case Studies", x = "Case Study", y = "MR Score")
+
+
+```
+```{r}
+# Prepare data for box plot
+mr_data <- data.frame(
+  CaseStudy1 = clean_data$mr1,
+  CaseStudy2 = clean_data$mr2,
+  CaseStudy3 = clean_data$mr3
+)
+
+# Melt the data for easier plotting with ggplot2
+library(reshape2)
+melted_mr_data <- melt(mr_data, variable.name = "CaseStudy", value.name = "MRScore")
+
+# Plotting
+library(ggplot2)
+ggplot(melted_mr_data, aes(x = CaseStudy, y = MRScore)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "MR Scores Across Three Case Studies", x = "Case Study", y = "MR Score")
+
+```
+
+##exploer analysis
+could overall confidence 
+```{r}
+model_final <- lm(grade ~ tconf, data = clean_data)
+summary(model_final)
+```
+
+Anova analysis?
+```{r}
+data_long <- data.frame(
+  ParticipantID = rep(clean_data$participant, times = 3),
+  TimePoint = rep(1:3, each = nrow(clean_data)),
+  Confidence = c(
+    (clean_data$metacognition1ConfidenceR + clean_data$metacognition1ConfidenceStatistics) / 2,
+    (clean_data$metacognition2ConfidenceR + clean_data$metacognition2ConfidenceStatistics) / 2,
+    (clean_data$metacognition3ConfidenceR + clean_data$metacognition3ConfidenceStatistics) / 2
+  )
+)
+```
+
+```{r}
+data_long$TimePoint <- as.factor(data_long$TimePoint)
+
+
+anova_results <- ezANOVA(
+  data = data_long,
+  dv = .(Confidence),
+  wid = .(ParticipantID),
+  within = .(TimePoint),
+  detailed = TRUE,
+  type = 3
+)
+
+anova_results
+
+```
+
