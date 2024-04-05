@@ -17,6 +17,7 @@ library(sjlabelled)
 library(mediation)
 library(lmtest)
 library(lme4)
+library(reshape2)
 ```
 
 #Loading data
@@ -58,13 +59,9 @@ clean_data$metacognition3ConfidenceStatistics <- as.numeric(gsub("%", "", clean_
 
 ```
 
-#Variable
-###Total case studt score
-```{r}
-clean_data$TotalCaseStudyScore <- clean_data$caseStudy1 + clean_data$caseStudy2 + clean_data$caseStudy3
-```
 ##Metacognitive reflection
 ```{r}
+
 clean_data$mr1 <- (clean_data$metacognition1ReflectQ4 + clean_data$metacognition1ReflectQ5) 
 clean_data$mr2 <- (clean_data$metacognition2ReflectQ4 + clean_data$metacognition1ReflectQ5)  
 clean_data$mr3 <- (clean_data$metacognition3ReflectQ4 + clean_data$metacognition1ReflectQ5)  
@@ -79,6 +76,7 @@ clean_data$TotalMRScore <- clean_data$mr1 + clean_data$mr2 + clean_data$mr3
 ```{r}
 clean_data$ALLMRScore <- clean_data$pre_mr+ clean_data$mr1 + clean_data$mr2 + clean_data$mr3
 ```
+
 ###total confidence in R and Stat of each case
 ```{r}
 clean_data$AverageRConfidence<- (clean_data$metacognition1ConfidenceR+ clean_data$metacognition2ConfidenceR +clean_data$metacognition3ConfidenceR)/3
@@ -134,6 +132,7 @@ Does student engagement with metacognitive reflection assignment association wit
 
 analysis #1: 
 ```{r}
+#overall
 model1 <- lm(grade ~ TotalMRScore, data = clean_data)
 summary(model1)
 
@@ -147,6 +146,24 @@ ggplot(clean_data, aes(x=TotalMRScore, y=grade)) +
        x="Metacognitive Reflection Score", 
        y="Final Grade")
 ```
+
+```{r}
+#follow up: acoress three case study
+# Prepare data for box plot
+mr_data <- data.frame(
+  CaseStudy1 = clean_data$mr1,
+  CaseStudy2 = clean_data$mr2,
+  CaseStudy3 = clean_data$mr3
+)
+
+melted_mr_data <- melt(mr_data, variable.name = "CaseStudy", value.name = "MRScore")
+
+ggplot(melted_mr_data, aes(x = CaseStudy, y = MRScore)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "MR Scores Across Three Case Studies", x = "Case Study", y = "MR Score")
+```
+
 ```{r}
 boxplot(grade~TotalMRScore,
 data=clean_data,
@@ -190,6 +207,7 @@ ggplot(clean_data, aes(x=premr, y=case1)) +
        x="Pre-Course Reflection Level", 
        y="First Exam Score")
 ```
+
 ##Research Question #3:
 Does students’ confidence levels in statics and R programming predict their performance in the performance (exam) in the course?
 
@@ -207,12 +225,6 @@ summary(model6)
 par(mfrow=c(2,2))
 plot(model6)
 ```
-
-```{r}
-combined_model <- lm(cbind(case1, case2, case3) ~ confidence1 + confidence2 + confidence3, data=clean_data)
-summary(combined_model)
-```
-
 ```{r}
 model7 <- lm(case3 ~ confidence3, data = clean_data)
 summary(model7)
@@ -220,75 +232,24 @@ summary(model7)
 par(mfrow=c(2,2))
 plot(model7)
 ```
+
 ```{r}
-# Prepare data for box plot
 confidence_data <- data.frame(
   CaseStudy1 = clean_data$metacognition1ConfidenceR,
   CaseStudy2 = clean_data$metacognition2ConfidenceR,
   CaseStudy3 = clean_data$metacognition3ConfidenceR
 )
 
-# Melt the data for easier plotting with ggplot2
-library(reshape2)
 melted_confidence_data <- melt(confidence_data, variable.name = "CaseStudy", value.name = "Confidence")
 
-# Plotting
-library(ggplot2)
 ggplot(melted_confidence_data, aes(x = CaseStudy, y = Confidence)) +
   geom_boxplot() +
   theme_minimal() +
   labs(title = "Confidence Level Across Three Case Studies", x = "Case Study", y = "Confidence Level")
-
 ```
 
-```{r}
-# Prepare data for box plot
-mr_data <- data.frame(
-  CaseStudy1 = clean_data$MR1,
-  CaseStudy2 = clean_data$MR2,
-  CaseStudy3 = clean_data$MR3
-)
-
-# Melt the data for easier plotting
-mr_melted <- melt(mr_data, variable.name = "CaseStudy", value.name = "MR_Score")
-
-# Plotting
-ggplot(mr_melted, aes(x = CaseStudy, y = MR_Score)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "Metacognitive Reflection Score Across Three Case Studies", x = "Case Study", y = "MR Score")
-
-
-```
-```{r}
-# Prepare data for box plot
-mr_data <- data.frame(
-  CaseStudy1 = clean_data$mr1,
-  CaseStudy2 = clean_data$mr2,
-  CaseStudy3 = clean_data$mr3
-)
-
-# Melt the data for easier plotting with ggplot2
-library(reshape2)
-melted_mr_data <- melt(mr_data, variable.name = "CaseStudy", value.name = "MRScore")
-
-# Plotting
-library(ggplot2)
-ggplot(melted_mr_data, aes(x = CaseStudy, y = MRScore)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "MR Scores Across Three Case Studies", x = "Case Study", y = "MR Score")
-
-```
-
-##exploer analysis
-could overall confidence 
-```{r}
-model_final <- lm(grade ~ tconf, data = clean_data)
-summary(model_final)
-```
-
-Anova analysis?
+#Anova analysis?
+##the confidence change acoress three case study
 ```{r}
 data_long <- data.frame(
   ParticipantID = rep(clean_data$participant, times = 3),
