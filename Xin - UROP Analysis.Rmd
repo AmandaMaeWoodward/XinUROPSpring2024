@@ -59,62 +59,32 @@ clean_data$metacognition3ConfidenceStatistics <- as.numeric(gsub("%", "", clean_
 
 ```
 
-#Variable
-##Final Class Grade
+##Metacognitive reflection
 ```{r}
-grade <- clean_data$finalClassGrade
-```
-##Case Study Grade
-```{r}
-case1 <- clean_data$caseStudy1
-case2 <- clean_data$caseStudy2
-case3 <- clean_data$caseStudy3
-```
-###Total case studt score
-```{r}
-clean_data$TotalCaseStudyScore <- clean_data$caseStudy1 + clean_data$caseStudy2 + clean_data$caseStudy3
-library(tidyverse)
-#View(cbind.data.frame(clean_data$caseStudy1,clean_data$caseStudy2,clean_data$caseStudy3,clean_data$TotalCaseStudyScore))
-```
-##R confidence
-```{r}
-rc1 <- clean_data$metacognition1ConfidenceR
-rc2 <- clean_data$metacognition2ConfidenceR
-rc3 <- clean_data$metacognition3ConfidenceR
-```
-##Statistics confidence
-```{r}
-statc1 <- clean_data$metacognition1ConfidenceStatistics
-statc2 <- clean_data$metacognition2ConfidenceStatistics
-statc3 <- clean_data$metacognition3ConfidenceStatistics
-```
-##Mentacognitive reflection
-```{r}
+
 clean_data$mr1 <- (clean_data$metacognition1ReflectQ4 + clean_data$metacognition1ReflectQ5) 
-mr2 <- (clean_data$metacognition2ReflectQ4 + clean_data$metacognition1ReflectQ5) 
-mr3 <- (clean_data$metacognition3ReflectQ4 + clean_data$metacognition1ReflectQ5) 
-pre_mr <-clea (clean_data$problemsolvingReflectionHelpful + clean_data$problemsolvingReflectionunHelpful + clean_data$problemSolvingReflectionStepbyStep)
+clean_data$mr2 <- (clean_data$metacognition2ReflectQ4 + clean_data$metacognition1ReflectQ5)  
+clean_data$mr3 <- (clean_data$metacognition3ReflectQ4 + clean_data$metacognition1ReflectQ5)  
+clean_data$pre_mr <- (clean_data$problemsolvingReflectionHelpful + clean_data$problemsolvingReflectionunHelpful + clean_data$problemSolvingReflectionStepbyStep)
 ```
 ###Total score of Metacognitive reflection
 ```{r}
-TotalMRScore <- mr1 + mr2 + mr3
+clean_data$TotalMRScore <- clean_data$mr1 + clean_data$mr2 + clean_data$mr3
 ```
-###Average Mentacognitive reflection
+
+###TotalMR score (including pre_mr) 
 ```{r}
-AverageMR <- (mr1 + mr2 + mr3) / 3
+clean_data$ALLMRScore <- clean_data$pre_mr+ clean_data$mr1 + clean_data$mr2 + clean_data$mr3
 ```
+
 ###total confidence in R and Stat of each case
 ```{r}
-confidence1 <- (clean_data$metacognition1ConfidenceR + clean_data$metacognition1ConfidenceStatistics) / 200
-confidence2 <- (clean_data$metacognition2ConfidenceR + clean_data$metacognition2ConfidenceStatistics) / 200
-confidence3 <- (clean_data$metacognition3ConfidenceR + clean_data$metacognition3ConfidenceStatistics) / 200
-```
-###total confidence
-```{r}
-TotalConfidence <- confidence1 + confidence2 + confidence3
+clean_data$AverageRConfidence<- (clean_data$metacognition1ConfidenceR+ clean_data$metacognition2ConfidenceR +clean_data$metacognition3ConfidenceR)/3
+clean_data$AverageStatisticsConfidence<- (clean_data$metacognition1ConfidenceStatistics + clean_data$metacognition2ConfidenceStatistics +clean_data$metacognition3ConfidenceStatistics)/3
 ```
 
 #Histogram
+Amanda Note: make sure to update these with the columns from the dataset
 ```{r}
 #Final class's scores
 hist(grade, main = "Final Grade")
@@ -144,7 +114,7 @@ hist(pre_mr, main = "Metacognition Reflect in problem solving reflection")
 hist(TotalConfidence, main = "Total R and statistics confidence in three case study")
 
 #total quality of metacogntion reflection score
-hist(TotalMRScore, main = "Total R and statistics confidence in three case study")
+hist(TotalMRScore, main = "metacognitive reflection in three case study")
 
 
 ```
@@ -159,15 +129,8 @@ summary(clean_data)
 ##Research Question #1:
 Does student engagement with metacognitive reflection assignment association with student academic outcome?
 ###Analysis 1: Individual Reflection MR Scores
-```{r}
-model1 <- lm(grade ~ mr1 + mr2 + mr3, data = clean_data) 
-summary(model1)
 
-par(mfrow=c(2,2))
-plot(model1)
-
-```
-This way?
+analysis #1: 
 ```{r}
 #overall
 model1 <- lm(grade ~ TotalMRScore, data = clean_data)
@@ -217,15 +180,15 @@ ggplot(data = clean_data) +
   geom_smooth(mapping = aes(x = TotalMRScore, y = grade))
 ```
 
-###Analysis 2: Using Average Reflection Score *
+analysis #2: 
 ```{r}
-model2 <- lm(grade ~ avgmr, data = clean_data)
-summary(model2)
+model1 <- lm(grade ~ mr1 + mr2 + mr3, data = clean_data) 
+summary(model1)
 
 par(mfrow=c(2,2))
-plot(model2)
-```
+plot(model1)
 
+```
 ##Research Question #2:
 How does student’s reflections on pre-course metagecontion reflection assignment association with their performance in first exam?
 
