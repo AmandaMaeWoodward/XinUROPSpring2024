@@ -17,6 +17,7 @@ library(sjlabelled)
 library(mediation)
 library(lmtest)
 library(lme4)
+library(reshape2)
 ```
 
 #Loading data
@@ -195,6 +196,22 @@ ggplot(data = clean_data) +
   geom_smooth(mapping = aes(x = TotalMRScore, y = grade))
 ```
 
+```{r}
+#box plot for metacognitive reflection score change across three case studies
+mr_data <- data.frame(
+  CaseStudy1 = clean_data$mr1,
+  CaseStudy2 = clean_data$mr2,
+  CaseStudy3 = clean_data$mr3
+)
+
+melted_mr_data <- melt(mr_data, variable.name = "CaseStudy", value.name = "MRScore")
+
+ggplot(melted_mr_data, aes(x = CaseStudy, y = MRScore)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "MR Scores Across Three Case Studies", x = "Case Study", y = "MR Score")
+```
+
 ###Analysis 2: Using Average Reflection Score *
 ```{r}
 model2 <- lm(grade ~ avgmr, data = clean_data)
@@ -232,6 +249,7 @@ summary(model4)
 par(mfrow=c(2,2))
 plot(model4)
 ```
+
 ```{r}
 model6 <- lm(case2 ~ confidence2, data = clean_data)
 summary(model6)
@@ -241,89 +259,23 @@ plot(model6)
 ```
 
 ```{r}
-combined_model <- lm(cbind(case1, case2, case3) ~ confidence1 + confidence2 + confidence3, data=clean_data)
-summary(combined_model)
-```
-
-```{r}
 model7 <- lm(case3 ~ confidence3, data = clean_data)
 summary(model7)
 
 par(mfrow=c(2,2))
 plot(model7)
 ```
-```{r}
-# Prepare data for box plot
-confidence_data <- data.frame(
-  CaseStudy1 = clean_data$metacognition1ConfidenceR,
-  CaseStudy2 = clean_data$metacognition2ConfidenceR,
-  CaseStudy3 = clean_data$metacognition3ConfidenceR
-)
-
-# Melt the data for easier plotting with ggplot2
-library(reshape2)
-melted_confidence_data <- melt(confidence_data, variable.name = "CaseStudy", value.name = "Confidence")
-
-# Plotting
-library(ggplot2)
-ggplot(melted_confidence_data, aes(x = CaseStudy, y = Confidence)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "Confidence Level Across Three Case Studies", x = "Case Study", y = "Confidence Level")
-
-```
 
 ```{r}
-# Prepare data for box plot
-mr_data <- data.frame(
-  CaseStudy1 = clean_data$MR1,
-  CaseStudy2 = clean_data$MR2,
-  CaseStudy3 = clean_data$MR3
-)
-
-# Melt the data for easier plotting
-mr_melted <- melt(mr_data, variable.name = "CaseStudy", value.name = "MR_Score")
-
-# Plotting
-ggplot(mr_melted, aes(x = CaseStudy, y = MR_Score)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "Metacognitive Reflection Score Across Three Case Studies", x = "Case Study", y = "MR Score")
-
-
-```
-```{r}
-# Prepare data for box plot
-mr_data <- data.frame(
-  CaseStudy1 = clean_data$mr1,
-  CaseStudy2 = clean_data$mr2,
-  CaseStudy3 = clean_data$mr3
-)
-
-# Melt the data for easier plotting with ggplot2
-library(reshape2)
-melted_mr_data <- melt(mr_data, variable.name = "CaseStudy", value.name = "MRScore")
-
-# Plotting
-library(ggplot2)
-ggplot(melted_mr_data, aes(x = CaseStudy, y = MRScore)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "MR Scores Across Three Case Studies", x = "Case Study", y = "MR Score")
-
+combined_model <- lm(cbind(case1, case2, case3) ~ confidence1 + confidence2 + confidence3, data=clean_data)
+summary(combined_model)
 ```
 
-##exploer analysis
-could overall confidence 
-```{r}
-model_final <- lm(grade ~ tconf, data = clean_data)
-summary(model_final)
-```
-
-Anova analysis?
+#Anova analysis? 
+#overall confidence change in three case study
 ```{r}
 data_long <- data.frame(
-  ParticipantID = rep(clean_data$participant, times = 3),
+  Participant = rep(clean_data$participant, times = 3),
   TimePoint = rep(1:3, each = nrow(clean_data)),
   Confidence = c(
     (clean_data$metacognition1ConfidenceR + clean_data$metacognition1ConfidenceStatistics) / 2,
@@ -331,22 +283,32 @@ data_long <- data.frame(
     (clean_data$metacognition3ConfidenceR + clean_data$metacognition3ConfidenceStatistics) / 2
   )
 )
-```
 
-```{r}
 data_long$TimePoint <- as.factor(data_long$TimePoint)
-
-
 anova_results <- ezANOVA(
   data = data_long,
   dv = .(Confidence),
-  wid = .(ParticipantID),
+  wid = .(Participant),
   within = .(TimePoint),
   detailed = TRUE,
   type = 3
 )
-
 anova_results
+```
 
+##confidence level change acoress three case study
+```{r}
+confidence_data <- data.frame(
+  CaseStudy1 = clean_data$metacognition1ConfidenceR,
+  CaseStudy2 = clean_data$metacognition2ConfidenceR,
+  CaseStudy3 = clean_data$metacognition3ConfidenceR
+)
+
+melted_confidence_data <- melt(confidence_data, variable.name = "CaseStudy", value.name = "Confidence")
+
+ggplot(melted_confidence_data, aes(x = CaseStudy, y = Confidence)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Confidence Level Across Three Case Studies", x = "Case Study", y = "Confidence Level")
 ```
 
